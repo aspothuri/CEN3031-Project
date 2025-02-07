@@ -8,5 +8,5 @@
 
 ## Install Backend
 - Run npm i -g @nestjs/cli
-- Run nest run
+- Run nest start
 - Go to port specified in main.ts (should be http://localhost:3000/)
