@@ -3,11 +3,13 @@ import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity } from 'reac
 import { useRouter } from "expo-router";
 
 export default function LogIn() {
+  const router = useRouter();
+
   const SubmitFunc = () => {
     // submit function stuff here
+    router.push("/pages/Profile");
   };
-
-  const router = useRouter();
+  
 
   return (
     <View style={styles.container}>

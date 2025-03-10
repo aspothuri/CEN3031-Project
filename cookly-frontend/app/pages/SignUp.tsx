@@ -3,11 +3,14 @@ import { View, Text, TextInput, StyleSheet, Platform, Button, Image, TouchableOp
 import { useRouter } from "expo-router";
 
 export default function SignIn() {
+
+  const router = useRouter();
+
   const CreateFunc = () => {
       // submit function stuff here
+      router.push("/pages/Profile");
     };
   
-    const router = useRouter();
   
     return (
       <View style={styles.container}>
