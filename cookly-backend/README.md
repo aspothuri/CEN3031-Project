@@ -2,5 +2,94 @@
 
 ## User
 
-/user/signup [POST]- pass json: {username: string, email: string, password: string}, To create a user in the database<br>
-/user [GET]- none, To get all users in database<br>
+### **Create User**
+
+**Endpoint:** `/user/signup`
+**Method:** `POST`
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Description:** Creates user in database. The password is hashed.
+
+---
+
+### **Get All Users**
+
+**Endpoint:** `/user`
+**Method:** `GET`
+**Request Body:** `None`
+**Description:** Fetches all users (testing)
+
+---
+
+### **Login**
+
+**Endpoint:** `/user/login`
+**Method:** `POST`
+**Request Body:**
+
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Description:** Authenticate with email and password. Returns user if valid.
+
+**Possible Responses:**
+
+- `200 OK`: Login successful.
+- `401 Unauthorized`: Password incorrect.
+- `404 Not Found`: User does not exist.
+
+---
+
+### **Get User Profile**
+
+**Endpoint:** `/user/profile/:username`
+**Method:** `GET`
+**Request Params:**
+
+- `username` (string) - User retrieved.
+
+**Description:** Fetch user profile with **followers** and **following** list.
+
+**Possible Responses:**
+
+- `200 OK`: Returns user data.
+- `404 Not Found`: User does not exist.
+
+---
+
+### **Follow/Unfollow User**
+
+**Endpoint:** `/user/follow`
+**Method:** `POST`
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "targetUsername": "string"
+}
+```
+
+**Description:**
+
+- (`username`) will follow `targetUsername` if not following.
+- (`username`) will unfollow `targetUsername` if following.
+- User tries to follow self, `400 Bad Request` error.
+
+**Possible Responses:**
+
+- `200 OK`: Message confirming follow/unfollow action.
+- `400 Bad Request`: User cannot follow themselves.
+- `404 Not Found`: One or both users not found.
