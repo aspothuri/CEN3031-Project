@@ -32,7 +32,7 @@
 ### **Login**
 
 **Endpoint:** `/user/login`
-**Method:** `POST`
+**Method:** `GET`
 **Request Body:**
 
 ```json
@@ -71,16 +71,12 @@
 
 ### **Follow/Unfollow User**
 
-**Endpoint:** `/user/follow`
-**Method:** `POST`
-**Request Body:**
+**Endpoint:** `/user/profile/:username/:targetUsername`
+**Method:** `PATCH`
+**Request Params:**
 
-```json
-{
-  "username": "string",
-  "targetUsername": "string"
-}
-```
+- `username` (string) - User following.
+- `targetUsername` (string) - User followed.
 
 **Description:**
 
