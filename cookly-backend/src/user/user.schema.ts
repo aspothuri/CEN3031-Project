@@ -14,6 +14,9 @@ export class User {
   @Prop({ required: true })
   password: string;
 
+  @Prop()
+  image: string;
+
   @Prop({
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
     default: [],

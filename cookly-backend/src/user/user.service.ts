@@ -10,10 +10,14 @@ import { User } from './user.schema';
 import { CreateUserDto } from './dtos/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const saltRounds = 10;
@@ -124,6 +128,38 @@ export class UserService {
 
       return { message: `${username} is now following ${targetUsername}` };
     }
+  }
+
+  async searchUsers(query: string): Promise<string[]> {
+    const users = await this.userModel
+      .find({ username: { $regex: query, $options: 'i' } })
+      .select('username')
+      .exec();
+    return users.map((user) => user.username);
+  }
+
+  async uploadImageFile(
+    file: Express.Multer.File,
+    username: string,
+  ): Promise<any> {
+    const result = await this.cloudinaryService.uploadImage(file);
+    if (!result) {
+      throw new Error('Image Could Not Be Uploaded');
+    }
+
+    const updatedUser = await this.userModel
+      .findOneAndUpdate(
+        { username: username },
+        { image: result.secure_url },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException('User Not Found');
+    }
+
+    return updatedUser;
   }
 
   async findAll(): Promise<User[]> {
