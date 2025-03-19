@@ -1,14 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from "expo-router";
 
 export default function LogIn() {
   const router = useRouter();
 
-  const SubmitFunc = () => {
-    // submit function stuff here
-    router.push("/pages/Profile");
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+
+  const LoginFunc = async () => {
+    setErrorMessage(""); 
+  
+    try {
+      
+      const response = await fetch("http://localhost:3000/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials"); 
+      }
+  
+      console.log("✅ Login successful:", data);
+  
+       //router.push(`/Profile/username=${data.username}`); // need to fix this once we fix profile page
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      console.error("Login failed:", errorMessage);
+      setErrorMessage(errorMessage); 
+    }
   };
+  
   
 
   return (
@@ -19,7 +48,9 @@ export default function LogIn() {
       <View style={styles.inputContainer}>
         <TextInput 
           style={styles.input} 
-          placeholder="Username"
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
           keyboardType="default"
           placeholderTextColor="#555"
         />
@@ -27,13 +58,18 @@ export default function LogIn() {
         <TextInput 
           style={styles.input} 
           placeholder="Password" 
+          value={password}
+          onChangeText={setPassword}
           secureTextEntry
           keyboardType="default"
           placeholderTextColor="#555"
         />
       </View>
-      
-      <TouchableOpacity style={styles.button} onPress={SubmitFunc}>
+
+      {/* display Error Message if login fails */}
+      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+      <TouchableOpacity style={styles.button} onPress={LoginFunc}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
 
@@ -112,4 +148,5 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
+  errorText: { color: 'red', fontSize: 16, marginTop: 10 },
 });

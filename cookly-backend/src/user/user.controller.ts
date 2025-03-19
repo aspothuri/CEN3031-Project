@@ -23,7 +23,7 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get('login')
+  @Post('login')
   login(@Body() loginDto: LoginDto): Promise<any> {
     return this.userService.login(loginDto);
   }

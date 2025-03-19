@@ -1,17 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Platform, Button, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from "expo-router";
 
-export default function SignIn() {
+export default function SignUp() { // was called signin before which was a little miss leading
 
   const router = useRouter();
 
-  const CreateFunc = () => {
-      // submit function stuff here
-      router.push("/pages/Profile");
-    };
+
+  //handles the state of the input fields
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  //api call to the signup
+  const CreateFunc = async () => {
+    setErrorMessage(""); // clear old errors. yes, it just printed the old errors without this
+
+    try {
+      console.log(" Attempting signup...");
+
+      const response = await fetch("http://localhost:3000/user/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed. Try again."); 
+      }
+
+      console.log("✅ Signup successful!", data);
+      //router.push(`/Profile?username=${username}`); // need to fix this once we fix profile page
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      console.error("🚨 Signup failed:", errorMessage);
+      setErrorMessage(errorMessage); 
+    }
+  };
   
-  
+
+
     return (
       <View style={styles.container}>
         <Image style={styles.image} source={require("../../assets/images/cookly-logo.png")} />
@@ -21,19 +51,32 @@ export default function SignIn() {
           <TextInput 
             style={styles.input} 
             placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
             keyboardType="default"
             placeholderTextColor="#555"
+          />
+          <TextInput 
+          style={styles.input} 
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail} //didn't have an email feild before
+          keyboardType="email-address"
+          placeholderTextColor="#555"
           />
           
           <TextInput 
             style={styles.input} 
             placeholder="Password" 
+            value={password}
+            onChangeText={setPassword}
             secureTextEntry
             keyboardType="default"
             placeholderTextColor="#555"
           />
         </View>
         
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         <TouchableOpacity style={styles.button} onPress={CreateFunc}>
           <Text style={styles.buttonText}>Create Account</Text>
         </TouchableOpacity>
@@ -109,4 +152,5 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
+  errorText: { color: 'red', fontSize: 16, marginTop: 10 }, 
 });
