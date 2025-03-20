@@ -32,7 +32,7 @@
 ### **Login**
 
 **Endpoint:** `/user/login`
-**Method:** `GET`
+**Method:** `POST (used to be GET)`
 **Request Body:**
 
 ```json
