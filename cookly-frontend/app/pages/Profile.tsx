@@ -1,8 +1,26 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 
-export default function Profile({ profileName = 'Ephraim Nicolas', email = 'eppy@yahoo.com' }) {
+const Recipes = () => (
+  <View style={styles.contentContainer}>
+    <Text style={styles.contentText}>
+      Saved Recipes will be displayed here.
+    </Text>
+  </View>
+);
+
+const Uploads = () => (
+  <View style={styles.contentContainer}>
+    <Text style={styles.contentText}>Your uploads will be displayed here.</Text>
+  </View>
+);
+
+export default function Profile({
+  profileName = "Ephraim Nicolas",
+  email = "eppy@yahoo.com",
+}) {
+  const [selectedTab, setSelectedTab] = useState("recipes");
   const router = useRouter();
 
   return (
@@ -10,12 +28,18 @@ export default function Profile({ profileName = 'Ephraim Nicolas', email = 'eppy
       {/* Header Section */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Your Profile</Text>
-        <Image style={styles.headerImage} source={require("../../assets/images/cookly-logo.png")} />
+        <Image
+          style={styles.headerImage}
+          source={require("../../assets/images/cookly-logo.png")}
+        />
       </View>
 
       {/* Profile Picture */}
       <View style={styles.profilePictureContainer}>
-        <Image style={styles.profilePicture} source={require("../../assets/images/cookly-logo.png")} />
+        <Image
+          style={styles.profilePicture}
+          source={require("../../assets/images/cookly-logo.png")}
+        />
       </View>
 
       {/* Profile Info */}
@@ -23,6 +47,25 @@ export default function Profile({ profileName = 'Ephraim Nicolas', email = 'eppy
         <Text style={styles.nameText}>{profileName}</Text>
         <Text style={styles.email}>{email}</Text>
       </View>
+
+      {/* Tabs */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          onPress={() => setSelectedTab("recipes")}
+          style={[styles.tab, selectedTab === "recipes" && styles.activeTab]}
+        >
+          <Text style={styles.tabText}>Saved Recipes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setSelectedTab("uploads")}
+          style={[styles.tab, selectedTab === "uploads" && styles.activeTab]}
+        >
+          <Text style={styles.tabText}>My Uploads</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      {selectedTab === "recipes" ? <Recipes /> : <Uploads />}
     </View>
   );
 }
@@ -30,9 +73,9 @@ export default function Profile({ profileName = 'Ephraim Nicolas', email = 'eppy
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   header: {
     flexDirection: "row",
@@ -44,30 +87,28 @@ const styles = StyleSheet.create({
     top: 0,
   },
   headerText: {
-    color: '#5be37f',
+    color: "#5be37f",
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   headerImage: {
     width: 60,
     height: 60,
   },
-  /* Profile Picture */
   profilePictureContainer: {
-    marginTop: 100, 
+    marginTop: 100,
     width: 120,
     height: 120,
-    borderRadius: 60, 
-    overflow: "hidden", 
+    borderRadius: 60,
+    overflow: "hidden",
     borderWidth: 3,
     borderColor: "#5be37f",
   },
   profilePicture: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover", 
+    resizeMode: "cover",
   },
-  /* Profile Info */
   profileInfo: {
     marginTop: 20,
     alignItems: "center",
@@ -81,5 +122,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginTop: 5,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    marginTop: 20,
+    width: "100%",
+    justifyContent: "space-around",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  tab: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  activeTab: {
+    borderBottomWidth: 3,
+    borderBottomColor: "#5be37f",
+  },
+  tabText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  contentContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  contentText: {
+    fontSize: 16,
+    color: "#666",
   },
 });
