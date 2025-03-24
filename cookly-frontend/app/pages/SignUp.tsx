@@ -32,7 +32,7 @@ export default function SignUp() { // was called signin before which was a littl
       }
 
       console.log("✅ Signup successful!", data);
-      //router.push(`/Profile?username=${username}`); // need to fix this once we fix profile page
+      router.push(`/pages/Profile?username=${data.username}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("🚨 Signup failed:", errorMessage);
