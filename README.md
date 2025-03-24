@@ -17,4 +17,5 @@
 
 - npm install -g localtunnel
 - lt --port 3000 --subdomain cookly{YOUR-NAME}
+- Go to the url that shows up and put in your public ip address as the password
 - BACKEND MAY HAVE TO BE RUNNING
