@@ -19,7 +19,7 @@ export default function SignUp() { // was called signin before which was a littl
     try {
       console.log(" Attempting signup...");
 
-      const response = await fetch("http://localhost:3000/user/signup", {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/user/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),

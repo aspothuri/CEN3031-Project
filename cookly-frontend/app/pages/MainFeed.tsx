@@ -28,14 +28,14 @@ export default function MainFeed() {
 
       {/* navigation bar with upload and profile button*/}
       <View style={styles.navBar}>
-        <TouchableOpacity style={styles.navButton} onPress={() => router.push("/upload") }>
+        <TouchableOpacity style={styles.navButton} onPress={() => ""}>
           <Text style={styles.navText}>Upload</Text>
         </TouchableOpacity>
 
         {/* line between upload and profile */}
         <View style={styles.separator} />
 
-        <TouchableOpacity style={styles.navButton} onPress={() => router.push("/profile") }>
+        <TouchableOpacity style={styles.navButton} onPress={() => router.push("/pages/Profile") }>
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>

@@ -23,7 +23,7 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/user/profile/${username}`);
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/user/profile/{username}`);
         const data = await res.json();
         setProfile(data);
       } catch (err) {
