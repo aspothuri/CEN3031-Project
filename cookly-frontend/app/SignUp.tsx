@@ -4,46 +4,55 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  Platform,
+  Button,
   Image,
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function LogIn() {
+export default function SignUp() {
+  // was called signin before which was a little miss leading
+
   const router = useRouter();
 
+  //handles the state of the input fields
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const { login } = useAuth();
 
-  const LoginFunc = async () => {
-    setErrorMessage("");
+  //api call to the signup
+  const CreateFunc = async () => {
+    setErrorMessage(""); // clear old errors. yes, it just printed the old errors without this
 
-    console.log("User Logging In");
     try {
+      console.log(" Attempting signup...");
+
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/user/login`,
+        `${process.env.EXPO_PUBLIC_API_URL}/user/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ username, email, password }),
         }
       );
 
-      console.log(response);
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Invalid credentials");
+        throw new Error(data.message || "Signup failed. Try again.");
       }
 
-      console.log("✅ Login successful:", data);
-
-      router.push(`/pages/Profile?username=${data.username}`);
+      console.log("✅ Signup successful!", data);
+      login();
+      router.push(`/(tabs)/Profile?username=${data.username}`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Something went wrong";
-      console.error("Login failed:", errorMessage);
+      console.error("🚨 Signup failed:", errorMessage);
       setErrorMessage(errorMessage);
     }
   };
@@ -52,17 +61,25 @@ export default function LogIn() {
     <View style={styles.container}>
       <Image
         style={styles.image}
-        source={require("../../assets/images/cookly-logo.png")}
+        source={require("@/assets/images/cookly-logo.png")}
       />
-      <Text style={styles.heading}>Welcome to Cookly</Text>
+      <Text style={styles.heading}>Get Started with Cookly</Text>
 
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+          keyboardType="default"
+          placeholderTextColor="#555"
+        />
+        <TextInput
+          style={styles.input}
           placeholder="Email"
           value={email}
-          onChangeText={setEmail}
-          keyboardType="default"
+          onChangeText={setEmail} //didn't have an email feild before
+          keyboardType="email-address"
           placeholderTextColor="#555"
         />
 
@@ -77,17 +94,11 @@ export default function LogIn() {
         />
       </View>
 
-      {/* display Error Message if login fails */}
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
-
-      <TouchableOpacity style={styles.button} onPress={LoginFunc}>
-        <Text style={styles.buttonText}>Submit</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push("/pages/SignUp")}>
-        <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+      <TouchableOpacity style={styles.button} onPress={CreateFunc}>
+        <Text style={styles.buttonText}>Create Account</Text>
       </TouchableOpacity>
     </View>
   );

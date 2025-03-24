@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Recipes = () => (
   <View style={styles.contentContainer}>
-    <Text style={styles.contentText}>Saved Recipes will be displayed here.</Text>
+    <Text style={styles.contentText}>
+      Saved Recipes will be displayed here.
+    </Text>
   </View>
 );
 
@@ -18,12 +21,20 @@ export default function Profile() {
   const router = useRouter();
   const { username } = useLocalSearchParams(); //  get username from URL
   const [selectedTab, setSelectedTab] = useState("recipes");
-  const [profile, setProfile] = useState({ username: "", email: "", image: "" });
+  const [profile, setProfile] = useState({
+    username: "",
+    email: "",
+    image: "",
+  });
+  const { isLoggedIn } = useAuth();
+  console.log(isLoggedIn);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/user/profile/{username}`);
+        const res = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL}/user/profile/${username}`
+        );
         const data = await res.json();
         setProfile(data);
       } catch (err) {
@@ -38,7 +49,10 @@ export default function Profile() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Your Profile</Text>
-        <Image style={styles.headerImage} source={require("../../assets/images/cookly-logo.png")} />
+        <Image
+          style={styles.headerImage}
+          source={require("@/assets/images/cookly-logo.png")}
+        />
       </View>
 
       {/* Profile Picture */}
@@ -48,7 +62,7 @@ export default function Profile() {
           source={
             profile.image
               ? { uri: profile.image }
-              : require("../../assets/images/cookly-logo.png")
+              : require("@/assets/images/cookly-logo.png")
           }
         />
       </View>
@@ -61,10 +75,16 @@ export default function Profile() {
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <TouchableOpacity onPress={() => setSelectedTab("recipes")} style={[styles.tab, selectedTab === "recipes" && styles.activeTab]}>
+        <TouchableOpacity
+          onPress={() => setSelectedTab("recipes")}
+          style={[styles.tab, selectedTab === "recipes" && styles.activeTab]}
+        >
           <Text style={styles.tabText}>Saved Recipes</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setSelectedTab("uploads")} style={[styles.tab, selectedTab === "uploads" && styles.activeTab]}>
+        <TouchableOpacity
+          onPress={() => setSelectedTab("uploads")}
+          style={[styles.tab, selectedTab === "uploads" && styles.activeTab]}
+        >
           <Text style={styles.tabText}>My Uploads</Text>
         </TouchableOpacity>
       </View>
@@ -78,6 +98,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
+    marginTop: 45,
     padding: 16,
     backgroundColor: "#ffffff",
   },

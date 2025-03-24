@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+} from "react-native";
 import { useRouter } from "expo-router";
 
 export default function MainFeed() {
@@ -11,7 +18,11 @@ export default function MainFeed() {
     <View style={styles.container}>
       {/* searching/filtering at the top */}
       <View style={styles.searchContainer}>
-        <TextInput style={styles.searchInput} placeholder="Search recipes..." placeholderTextColor="#aaa" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search recipes..."
+          placeholderTextColor="#aaa"
+        />
       </View>
 
       {/* attempt at scrolling functionality */}
@@ -25,20 +36,6 @@ export default function MainFeed() {
         )}
         showsVerticalScrollIndicator={false}
       />
-
-      {/* navigation bar with upload and profile button*/}
-      <View style={styles.navBar}>
-        <TouchableOpacity style={styles.navButton} onPress={() => ""}>
-          <Text style={styles.navText}>Upload</Text>
-        </TouchableOpacity>
-
-        {/* line between upload and profile */}
-        <View style={styles.separator} />
-
-        <TouchableOpacity style={styles.navButton} onPress={() => router.push("/pages/Profile") }>
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -46,6 +43,7 @@ export default function MainFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 45,
     backgroundColor: "#ffffff",
   },
   searchContainer: {
@@ -59,8 +57,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   feedItem: {
-    width: "100%",  
-    height: 600,    
+    width: "100%",
+    height: 600,
     backgroundColor: "#e0e0e0",
     justifyContent: "center",
     alignItems: "center",
@@ -72,14 +70,14 @@ const styles = StyleSheet.create({
   },
   navBar: {
     flexDirection: "row",
-    justifyContent: "center", 
-    alignItems: "center",     
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 15,
     backgroundColor: "#5be37f",
   },
   navButton: {
     paddingVertical: 10,
-    paddingHorizontal: 20,    
+    paddingHorizontal: 20,
   },
   navText: {
     fontSize: 18,
@@ -87,10 +85,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   separator: {
-    width: 1,             // Border width
-    height: "100%",        // Height of the border
+    width: 1, // Border width
+    height: "100%", // Height of the border
     backgroundColor: "#fff", // Border color
     marginHorizontal: 10, // Space between buttons and border
   },
 });
-
