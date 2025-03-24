@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { User } from './user.schema';
+import { Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
@@ -22,6 +23,11 @@ export class UserController {
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.create(createUserDto);
   }
+  @Delete(':username')
+  deleteUser(@Param('username') username: string): Promise<{ message: string }> {
+  return this.userService.deleteUser(username);
+}
+
 
   @Post('login')
   login(@Body() loginDto: LoginDto): Promise<any> {

@@ -179,4 +179,15 @@ export class UserService {
       .populate('following', 'username')
       .exec();
   }
+  
+  async deleteUser(username: string): Promise<{ message: string }> {
+    const deleted = await this.userModel.findOneAndDelete({ username }).exec();
+  
+    if (!deleted) {
+      throw new NotFoundException(`User "${username}" not found.`);
+    }
+  
+    return { message: `User "${username}" has been deleted.` };
+  }
+  
 }
