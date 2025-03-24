@@ -39,7 +39,7 @@ export default function LogIn() {
 
       console.log("✅ Login successful:", data);
 
-      //router.push(`/Profile/username=${data.username}`); // need to fix this once we fix profile page
+      router.push(`/pages/Profile?username=${data.username}`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Something went wrong";

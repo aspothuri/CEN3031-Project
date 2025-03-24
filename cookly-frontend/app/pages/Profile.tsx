@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
 const Recipes = () => (
   <View style={styles.contentContainer}>
-    <Text style={styles.contentText}>
-      Saved Recipes will be displayed here.
-    </Text>
+    <Text style={styles.contentText}>Saved Recipes will be displayed here.</Text>
   </View>
 );
 
@@ -16,55 +14,61 @@ const Uploads = () => (
   </View>
 );
 
-export default function Profile({
-  profileName = "Ephraim Nicolas",
-  email = "eppy@yahoo.com",
-}) {
-  const [selectedTab, setSelectedTab] = useState("recipes");
+export default function Profile() {
   const router = useRouter();
+  const { username } = useLocalSearchParams(); //  get username from URL
+  const [selectedTab, setSelectedTab] = useState("recipes");
+  const [profile, setProfile] = useState({ username: "", email: "", image: "" });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/user/profile/${username}`);
+        const data = await res.json();
+        setProfile(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch profile:", err);
+      }
+    };
+    fetchProfile();
+  }, [username]);
 
   return (
     <View style={styles.container}>
-      {/* Header Section */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Your Profile</Text>
-        <Image
-          style={styles.headerImage}
-          source={require("../../assets/images/cookly-logo.png")}
-        />
+        <Image style={styles.headerImage} source={require("../../assets/images/cookly-logo.png")} />
       </View>
 
       {/* Profile Picture */}
       <View style={styles.profilePictureContainer}>
         <Image
           style={styles.profilePicture}
-          source={require("../../assets/images/cookly-logo.png")}
+          source={
+            profile.image
+              ? { uri: profile.image }
+              : require("../../assets/images/cookly-logo.png")
+          }
         />
       </View>
 
-      {/* Profile Info */}
+      {/* Info */}
       <View style={styles.profileInfo}>
-        <Text style={styles.nameText}>{profileName}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.nameText}>{profile.username}</Text>
+        <Text style={styles.email}>{profile.email}</Text>
       </View>
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          onPress={() => setSelectedTab("recipes")}
-          style={[styles.tab, selectedTab === "recipes" && styles.activeTab]}
-        >
+        <TouchableOpacity onPress={() => setSelectedTab("recipes")} style={[styles.tab, selectedTab === "recipes" && styles.activeTab]}>
           <Text style={styles.tabText}>Saved Recipes</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setSelectedTab("uploads")}
-          style={[styles.tab, selectedTab === "uploads" && styles.activeTab]}
-        >
+        <TouchableOpacity onPress={() => setSelectedTab("uploads")} style={[styles.tab, selectedTab === "uploads" && styles.activeTab]}>
           <Text style={styles.tabText}>My Uploads</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
       {selectedTab === "recipes" ? <Recipes /> : <Uploads />}
     </View>
   );
