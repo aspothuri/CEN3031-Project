@@ -4,29 +4,26 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Platform,
-  Button,
   Image,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUp() {
-  // was called signin before which was a little miss leading
-
   const router = useRouter();
 
-  //handles the state of the input fields
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const { login } = useAuth();
 
-  //api call to the signup
   const CreateFunc = async () => {
-    setErrorMessage(""); // clear old errors. yes, it just printed the old errors without this
+    setErrorMessage("");
 
     try {
       console.log(" Attempting signup...");
@@ -50,59 +47,64 @@ export default function SignUp() {
       login();
       router.push(`/(tabs)/Profile?username=${data.username}`);
     } catch (error) {
-      const errorMessage =
+      const message =
         error instanceof Error ? error.message : "Something went wrong";
-      console.error("🚨 Signup failed:", errorMessage);
-      setErrorMessage(errorMessage);
+      console.error("🚨 Signup failed:", message);
+      setErrorMessage(message);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        style={styles.image}
-        source={require("@/assets/images/cookly-logo.png")}
-      />
-      <Text style={styles.heading}>Get Started with Cookly</Text>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-          keyboardType="default"
-          placeholderTextColor="#555"
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Image
+          style={styles.image}
+          source={require("@/assets/images/cookly-logo.png")}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail} //didn't have an email feild before
-          keyboardType="email-address"
-          placeholderTextColor="#555"
-        />
+        <Text style={styles.heading}>Get Started with Cookly</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          keyboardType="default"
-          placeholderTextColor="#555"
-        />
-      </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+            keyboardType="default"
+            placeholderTextColor="#555"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            placeholderTextColor="#555"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#555"
+          />
+        </View>
 
-      {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      ) : null}
-      <TouchableOpacity style={styles.button} onPress={CreateFunc}>
-        <Text style={styles.buttonText}>Create Account</Text>
-      </TouchableOpacity>
-    </View>
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
+        <TouchableOpacity style={styles.button} onPress={CreateFunc}>
+          <Text style={styles.buttonText}>Create Account</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
