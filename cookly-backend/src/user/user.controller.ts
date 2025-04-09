@@ -24,10 +24,11 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
   @Delete(':username')
-  deleteUser(@Param('username') username: string): Promise<{ message: string }> {
-  return this.userService.deleteUser(username);
-}
-
+  deleteUser(
+    @Param('username') username: string,
+  ): Promise<{ message: string }> {
+    return this.userService.deleteUser(username);
+  }
 
   @Post('login')
   login(@Body() loginDto: LoginDto): Promise<any> {
@@ -54,7 +55,7 @@ export class UserController {
 
   @Post('profile/upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadImageFile(
+  uploadImageFile(
     @UploadedFile() file: Express.Multer.File,
     @Body('username') username: string,
   ) {
@@ -66,6 +67,19 @@ export class UserController {
     }
 
     return this.userService.uploadImageFile(file, username);
+  }
+
+  @Get('/:username/videos')
+  getPersonalVideos(@Param('username') username: string): Promise<string[]> {
+    return this.userService.getPersonalVideos(username);
+  }
+
+  @Delete('/:username/:videoId')
+  deleteVideoFile(
+    @Param('videoId') videoId: string,
+    @Param('username') username: string,
+  ): Promise<{ message: string }> {
+    return this.userService.deleteVideoFile(videoId, username);
   }
 
   @Get()

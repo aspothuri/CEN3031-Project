@@ -11,11 +11,13 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Video } from 'src/video/video.schema';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Video.name) private videoModel: Model<Video>,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -26,7 +28,7 @@ export class UserService {
         { email: createUserDto.email },
       ],
     });
-  
+
     if (existingUser) {
       throw new BadRequestException('Username or email already exists.');
     }
@@ -152,7 +154,7 @@ export class UserService {
     file: Express.Multer.File,
     username: string,
   ): Promise<any> {
-    const result = await this.cloudinaryService.uploadImage(file);
+    const result = await this.cloudinaryService.uploadMedia(file);
     if (!result) {
       throw new Error('Image Could Not Be Uploaded');
     }
@@ -179,15 +181,64 @@ export class UserService {
       .populate('following', 'username')
       .exec();
   }
-  
+
   async deleteUser(username: string): Promise<{ message: string }> {
     const deleted = await this.userModel.findOneAndDelete({ username }).exec();
-  
+
     if (!deleted) {
       throw new NotFoundException(`User "${username}" not found.`);
     }
-  
+
     return { message: `User "${username}" has been deleted.` };
   }
-  
+
+  async getPersonalVideos(username: string): Promise<string[]> {
+    const user = await this.userModel
+      .findOne({ username: username })
+      .populate('personalVideoIds', 'link')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException(`${username} not found`);
+    }
+
+    return user.personalVideoIds;
+  }
+
+  async deleteVideoFile(
+    videoId: string,
+    username: string,
+  ): Promise<{ message: string }> {
+    const userDeleted = await this.userModel
+      .findOneAndUpdate(
+        { username: username },
+        { $pull: { personalVideoIds: videoId } },
+      )
+      .exec();
+
+    if (!userDeleted) {
+      throw new NotFoundException(`User "${username}" not found.`);
+    }
+
+    const videoDeleted = await this.videoModel
+      .findByIdAndDelete({
+        _id: videoId,
+      })
+      .exec();
+
+    if (!videoDeleted) {
+      throw new NotFoundException(`Video Id not found.`);
+    }
+
+    const cloudinaryDelete = await this.cloudinaryService.deleteMedia(
+      videoDeleted.link,
+      'video',
+    );
+
+    if (!cloudinaryDelete) {
+      throw new NotFoundException(`Video not found in cloudinary.`);
+    }
+
+    return { message: `${username}'s video has been deleted.` };
+  }
 }

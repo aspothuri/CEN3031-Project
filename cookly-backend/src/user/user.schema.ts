@@ -7,9 +7,9 @@ export type UserDocument = HydratedDocument<User>;
 export class User {
   @Prop({ required: true, unique: true })
   username: string;
-  
+
   @Prop({ required: true, unique: true })
-  email: string;  
+  email: string;
 
   @Prop({ required: true })
   password: string;
@@ -28,6 +28,18 @@ export class User {
     default: [],
   })
   following: string[];
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Video' }],
+    default: [],
+  })
+  personalVideoIds: string[];
+
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Video' }],
+    default: [],
+  })
+  LikedVideoIds: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -4,6 +4,7 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { User, UserSchema } from './user.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Video, VideoSchema } from 'src/video/video.schema';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
         schema: UserSchema,
       },
     ]),
+    MongooseModule.forFeature([{ name: Video.name, schema: VideoSchema }]),
   ],
   controllers: [UserController],
   providers: [UserService, CloudinaryService],
