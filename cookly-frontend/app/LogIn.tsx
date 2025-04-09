@@ -6,7 +6,11 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
+
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -53,7 +57,12 @@ export default function LogIn() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+  
       <Image
         style={styles.image}
         source={require("@/assets/images/cookly-logo.png")}
@@ -93,7 +102,8 @@ export default function LogIn() {
       <TouchableOpacity onPress={() => router.push("/SignUp")}>
         <Text style={styles.linkText}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
