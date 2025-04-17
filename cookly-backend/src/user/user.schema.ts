@@ -39,7 +39,7 @@ export class User {
     type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Video' }],
     default: [],
   })
-  LikedVideoIds: string[];
+  likedVideoIds: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

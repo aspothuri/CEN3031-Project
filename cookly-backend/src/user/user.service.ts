@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './user.schema';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './dtos/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -195,7 +195,7 @@ export class UserService {
   async getPersonalVideos(username: string): Promise<string[]> {
     const user = await this.userModel
       .findOne({ username: username })
-      .populate('personalVideoIds', 'link')
+      .populate('personalVideoIds', 'link views likes description')
       .exec();
 
     if (!user) {
@@ -203,6 +203,19 @@ export class UserService {
     }
 
     return user.personalVideoIds;
+  }
+
+  async getLikedVideos(username: string): Promise<string[]> {
+    const user = await this.userModel
+      .findOne({ username: username })
+      .populate('likedVideoIds', 'link views likes description')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException(`${username} not found`);
+    }
+
+    return user.likedVideoIds;
   }
 
   async deleteVideoFile(
@@ -240,5 +253,89 @@ export class UserService {
     }
 
     return { message: `${username}'s video has been deleted.` };
+  }
+
+  async likeVideo(videoId: string, username: string): Promise<any> {
+    const userLike = await this.userModel
+      .updateOne(
+        {
+          username: username,
+        },
+        { $addToSet: { likedVideoIds: videoId } },
+      )
+      .exec();
+
+    if (!userLike) {
+      throw new Error('Could Not Add Like To User');
+    }
+
+    if (userLike.modifiedCount == 0) {
+      const videoLike = await this.videoModel.findById(videoId);
+
+      if (!videoLike) {
+        throw new Error('Could Not Find Video');
+      }
+      return { likes: videoLike.likes };
+    }
+
+    const videoLike = await this.videoModel
+      .findByIdAndUpdate(videoId, { $inc: { likes: 1 } }, { new: true })
+      .exec();
+
+    if (!videoLike) {
+      this.userModel
+        .findOneAndUpdate(
+          {
+            username: username,
+          },
+          { $pull: { likedVideoIds: videoId } },
+        )
+        .exec();
+      throw new Error('Could Not Add Like To Video');
+    }
+
+    return { likes: videoLike.likes };
+  }
+
+  async unlikeVideo(videoId: string, username: string): Promise<any> {
+    const userLike = await this.userModel
+      .updateOne(
+        {
+          username: username,
+        },
+        { $pull: { likedVideoIds: videoId } },
+      )
+      .exec();
+
+    if (!userLike) {
+      throw new Error('Could Not Unlike User');
+    }
+
+    if (userLike.modifiedCount == 0) {
+      const videoLike = await this.videoModel.findById(videoId);
+
+      if (!videoLike) {
+        throw new Error('Could Not Find Video');
+      }
+      return { likes: videoLike.likes };
+    }
+
+    const videoLike = await this.videoModel
+      .findByIdAndUpdate(videoId, { $inc: { likes: -1 } }, { new: true })
+      .exec();
+
+    if (!videoLike) {
+      this.userModel
+        .findOneAndUpdate(
+          {
+            username: username,
+          },
+          { $addToSet: { likedVideoIds: videoId } },
+        )
+        .exec();
+      throw new Error('Could Not Unlike Video');
+    }
+
+    return { likes: videoLike.likes };
   }
 }

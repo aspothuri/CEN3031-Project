@@ -9,6 +9,8 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { VideoController } from './video/video.controller';
 import { VideoService } from './video/video.service';
 import { VideoModule } from './video/video.module';
+import { CommentModule } from './comment/comment.module';
+import { ReplyModule } from './reply/reply.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { VideoModule } from './video/video.module';
     UserModule,
     CloudinaryModule,
     VideoModule,
+    CommentModule,
+    ReplyModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryService],

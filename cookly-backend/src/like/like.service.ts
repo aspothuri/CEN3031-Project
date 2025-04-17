@@ -1,0 +1,24 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Like } from './like.schema';
+import { CreateLikeDto } from './dtos/create-like.dto';
+import { DeleteLikeDto } from './dtos/delete-like.dto';
+import { ClearLikeDto } from './dtos/clear-like.dto';
+
+@Injectable()
+export class LikeService {
+  constructor(@InjectModel(Like.name) private likeModel: Model<Like>) {}
+
+  async createLike(createLikeDto: CreateLikeDto) {
+    return this.likeModel.create(createLikeDto);
+  }
+
+  async deleteLike(deleteLikeDto: DeleteLikeDto) {
+    return this.likeModel.deleteOne(deleteLikeDto);
+  }
+
+  async clearLikes(clearLikeDto: ClearLikeDto) {
+    return this.likeModel.deleteMany(clearLikeDto);
+  }
+}

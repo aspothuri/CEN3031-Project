@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -19,7 +21,8 @@ export class VideoController {
   uploadVideoFile(
     @UploadedFile() file: Express.Multer.File,
     @Body('username') username: string,
-  ) {
+    @Body('description') description: string,
+  ): Promise<any> | { message: string } {
     if (!file) {
       return { message: 'File is required' };
     }
@@ -27,6 +30,16 @@ export class VideoController {
       return { message: 'Username is required' };
     }
 
-    return this.videoService.uploadVideoFile(file, username);
+    return this.videoService.uploadVideoFile(file, username, description);
+  }
+
+  @Get('search/:query')
+  searchVideos(@Param('query') query: string): Promise<any> {
+    return this.videoService.searchVideos(query);
+  }
+
+  @Patch(':id/view')
+  viewVideo(@Param('id') id: string): Promise<any> {
+    return this.videoService.viewVideo(id);
   }
 }

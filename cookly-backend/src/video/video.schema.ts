@@ -8,50 +8,14 @@ export class Video {
   @Prop({ required: true, unique: true })
   link: string;
 
-  @Prop({ default: 0 })
+  @Prop({ default: 0, required: true })
   likes: number;
 
-  @Prop({ default: 0 })
+  @Prop({ default: 0, required: true })
   views: number;
 
-  @Prop({ default: '' })
+  @Prop({ default: '', required: true })
   description: string;
-
-  @Prop({
-    type: [
-      {
-        user: {
-          type: MongooseSchema.Types.ObjectId,
-          ref: 'User',
-          required: true,
-        },
-        text: { type: String, required: true },
-        likes: { type: Number, default: 0 },
-        replies: [
-          {
-            user: {
-              type: MongooseSchema.Types.ObjectId,
-              ref: 'User',
-              required: true,
-            },
-            text: { type: String, required: true },
-            likes: { type: Number, default: 0 },
-          },
-        ],
-      },
-    ],
-    default: [],
-  })
-  comments: Array<{
-    user: Types.ObjectId;
-    text: string;
-    likes: number;
-    replies: Array<{
-      user: Types.ObjectId;
-      text: string;
-      likes: number;
-    }>;
-  }>;
 }
 
 export const VideoSchema = SchemaFactory.createForClass(Video);

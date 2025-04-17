@@ -10,7 +10,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './dtos/createUser.dto';
 import { User } from './user.schema';
 import { Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -74,12 +74,33 @@ export class UserController {
     return this.userService.getPersonalVideos(username);
   }
 
+  @Get('/:username/likedVideos')
+  getLikedVideos(@Param('username') username: string): Promise<string[]> {
+    return this.userService.getLikedVideos(username);
+  }
+
   @Delete('/:username/:videoId')
   deleteVideoFile(
     @Param('videoId') videoId: string,
     @Param('username') username: string,
   ): Promise<{ message: string }> {
     return this.userService.deleteVideoFile(videoId, username);
+  }
+
+  @Patch('/:username/:videoId/like')
+  likeVideo(
+    @Param('videoId') videoId: string,
+    @Param('username') username: string,
+  ): Promise<any> {
+    return this.userService.likeVideo(videoId, username);
+  }
+
+  @Patch('/:username/:videoId/unlike')
+  unlikeVideo(
+    @Param('videoId') videoId: string,
+    @Param('username') username: string,
+  ): Promise<any> {
+    return this.userService.unlikeVideo(videoId, username);
   }
 
   @Get()
