@@ -1,8 +1,22 @@
 # API Docs
 
+## App
+
+### Health Check
+
+**Endpoint:** `/`
+**Method:** `GET`
+**Request Body:** `None`
+**Description:** Returns a simple greeting to verify the server is running.
+**Possible Responses:**
+
+- `200 OK`: `"Hello World!"`
+
+---
+
 ## User
 
-### **Create User**
+### Create User
 
 **Endpoint:** `/user/signup`
 **Method:** `POST`
@@ -16,23 +30,32 @@
 }
 ```
 
-**Description:** Creates user in database. The password is hashed.
+**Description:** Creates a new user in the database. Password is hashed before storage.
+**Possible Responses:**
+
+- `201 Created`: Returns the created `User` object.
+- `400 Bad Request`: Validation errors.
 
 ---
 
-### **Get All Users**
+### Delete User
 
-**Endpoint:** `/user`
-**Method:** `GET`
-**Request Body:** `None`
-**Description:** Fetches all users (testing)
+**Endpoint:** `/user/:username`
+**Method:** `DELETE`
+**Path Params:**
+
+- `username` (string) – The username of the user to delete.
+  **Description:** Deletes the specified user from the database.
+  **Possible Responses:**
+- `200 OK`: `{ "message": "User deleted" }`
+- `404 Not Found`: User does not exist.
 
 ---
 
-### **Login**
+### Login
 
 **Endpoint:** `/user/login`
-**Method:** `POST (used to be GET)`
+**Method:** `POST`
 **Request Body:**
 
 ```json
@@ -42,94 +65,347 @@
 }
 ```
 
-**Description:** Authenticate with email and password. Returns user if valid.
-
+**Description:** Authenticates user by email and password, returns an access token if successful.
 **Possible Responses:**
 
-- `200 OK`: Login successful.
-- `401 Unauthorized`: Password incorrect.
-- `404 Not Found`: User does not exist.
+- `200 OK`: `{ "accessToken": "string", "user": { … } }`
+- `401 Unauthorized`: Incorrect password.
+- `404 Not Found`: User not found.
 
 ---
 
-### **Get User Profile**
+### Get User Profile
 
 **Endpoint:** `/user/profile/:username`
 **Method:** `GET`
-**Request Params:**
+**Path Params:**
 
-- `username` (string) - User retrieved.
-
-**Description:** Fetch user profile with **followers** and **following** list.
-
-**Possible Responses:**
-
-- `200 OK`: Returns user data.
-- `404 Not Found`: User does not exist.
+- `username` (string) – The username whose profile to fetch.
+  **Description:** Retrieves user profile including `followers` and `following` lists.
+  **Possible Responses:**
+- `200 OK`: `{ "user": { … }, "followers": ["string"], "following": ["string"] }`
+- `404 Not Found`: User not found.
 
 ---
 
-### **Follow/Unfollow User**
+### Follow/Unfollow User
 
 **Endpoint:** `/user/profile/:username/:targetUsername`
 **Method:** `PATCH`
-**Request Params:**
+**Path Params:**
 
-- `username` (string) - User following.
-- `targetUsername` (string) - User followed.
-
-**Description:**
-
-- (`username`) will follow `targetUsername` if not following.
-- (`username`) will unfollow `targetUsername` if following.
-- User tries to follow self, `400 Bad Request` error.
-
-**Possible Responses:**
-
-- `200 OK`: Message confirming follow/unfollow action.
-- `400 Bad Request`: User cannot follow themselves.
+- `username` (string) – The acting user.
+- `targetUsername` (string) – The user to follow or unfollow.
+  **Description:**
+- If `username` is not following `targetUsername`, they will follow.
+- If already following, they will unfollow.
+- Cannot follow oneself.
+  **Possible Responses:**
+- `200 OK`: `{ "message": "Followed" }` or `{ "message": "Unfollowed" }`
+- `400 Bad Request`: Cannot follow yourself.
 - `404 Not Found`: One or both users not found.
 
 ---
 
-### **Search Users**
-
-**Endpoint:** `/user/:query`
-**Method:** `GET`
-**Request Params:**
-
-- `query` (string) - A user search query string.
-
-**Description:**
-
-- Searches for users whose usernames match the provided query string.
-- The search is case-insensitive.
-
-**Possible Responses:**
-
-- `200 OK`: Returns a list of matching usernames.
-- `404 Not Found`: No users found matching the query.
-
----
-
-### **Upload Profile Image**
+### Upload Profile Image
 
 **Endpoint:** `/user/profile/upload`
 **Method:** `POST`
-**Request Body:**
+**Request Body (multipart/form-data):**
 
-- `file` (multipart/form-data) - The image file to be uploaded.
-- `username` (string) - The username of the user uploading the image.
-
-**Description:**
-
-- Uploads a profile image for the specified user.
-- The image is stored using Cloudinary.
-- The user's profile is updated with the new image URL.
-
-**Possible Responses:**
-
-- `200 OK`: Image uploaded successfully, returns updated user data.
-- `400 Bad Request`: Missing file or username in request.
+- `file` (file) – The image file.
+- `username` (string) – The username of the user.
+  **Description:** Uploads a profile image to Cloudinary and updates the user's `avatarUrl`.
+  **Possible Responses:**
+- `200 OK`: Returns updated `User` object.
+- `400 Bad Request`: Missing file or username.
 - `404 Not Found`: User not found.
 - `500 Internal Server Error`: Image upload failed.
+
+---
+
+### Get Personal Videos
+
+**Endpoint:** `/user/:username/videos`
+**Method:** `GET`
+**Path Params:**
+
+- `username` (string) – The username whose videos to fetch.
+  **Description:** Retrieves an array of video IDs or URLs uploaded by the user.
+  **Possible Responses:**
+- `200 OK`: `["string"]` (list of video IDs or links)
+- `404 Not Found`: User not found.
+
+---
+
+### Unlike Video
+
+**Endpoint:** `/user/:username/:videoId/unlike`
+**Method:** `PATCH`
+**Path Params:**
+
+- `username` (string) – The user performing the unlike.
+- `videoId` (string) – The video to unlike.
+  **Description:** Removes the like record for the user/video and decrements the video’s like count.
+  **Possible Responses:**
+- `200 OK`: `{ "likes": number }` (new total likes)
+- `404 Not Found`: User or video not found.
+
+---
+
+### Get All Users (Testing)
+
+**Endpoint:** `/user`
+**Method:** `GET`
+**Description:** Retrieves all user records (for testing).
+**Possible Responses:**
+
+- `200 OK`: `[{ … }]` (list of `User` objects)
+
+---
+
+## Video
+
+### Upload Video
+
+**Endpoint:** `/video/upload`
+**Method:** `POST`
+**Request Body (multipart/form-data):**
+
+- `file` (file) – The video file.
+- `username` (string) – Uploader's username.
+- `description` (string) – Optional caption.
+  **Description:** Uploads video to storage (e.g., S3/Cloudinary) and creates a `Video` record.
+  **Possible Responses:**
+- `200 OK`: `{ "message": "Uploaded", "video": { … } }`
+- `400 Bad Request`: Missing file or username.
+- `500 Internal Server Error`: Upload/storage error.
+
+---
+
+### Search Videos
+
+**Endpoint:** `/video/search/:query`
+**Method:** `GET`
+**Path Params:**
+
+- `query` (string) – Search keyword for title/description.
+  **Description:** Performs full-text or regex search on videos.
+  **Possible Responses:**
+- `200 OK`: `[{ … }]` (list of matching `Video` objects)
+- `404 Not Found`: No matches found.
+
+---
+
+### Increment View Count
+
+**Endpoint:** `/video/:id/view`
+**Method:** `PATCH`
+**Path Params:**
+
+- `id` (string) – The video ID.
+  **Description:** Increments the video’s `views` count by one.
+  **Possible Responses:**
+- `200 OK`: `{ "views": number }` (new total views)
+- `404 Not Found`: Video not found.
+
+---
+
+### Get Main Feed
+
+**Endpoint:** `/video/feed`
+**Method:** `GET`
+**Description:** Retrieves a ranked list of videos for the main feed (e.g., sorted by popularity or recency).
+**Possible Responses:**
+
+- `200 OK`: `[{ … }]` (list of `Video` objects)
+
+---
+
+## Comment
+
+### Create Comment
+
+**Endpoint:** `/comment`
+**Method:** `POST`
+**Request Body:**
+
+```json
+{
+  "parentId": "string", // ID of video or parent comment
+  "author": "string", // username
+  "text": "string"
+}
+```
+
+**Description:** Adds a new comment under the specified parent.
+**Possible Responses:**
+
+- `201 Created`: Returns the created `Comment` object.
+- `400 Bad Request`: Validation errors.
+
+---
+
+### Get Comment by ID
+
+**Endpoint:** `/comment?id=<commentId>`
+**Method:** `GET`
+**Query Params:**
+
+- `id` (string) – The comment ID.
+  **Description:** Retrieves a single comment by its ID.
+  **Possible Responses:**
+- `200 OK`: `{ … }` (`Comment` object)
+- `404 Not Found`: Comment not found.
+
+---
+
+### List Comments for Parent
+
+**Endpoint:** `/comment/all?parentId=<parentId>`
+**Method:** `GET`
+**Query Params:**
+
+- `parentId` (string) – ID of the video or comment.
+  **Description:** Lists all comments under the given parent.
+  **Possible Responses:**
+- `200 OK`: `[{ … }]` (list of `Comment` objects)
+
+---
+
+### Update Comment
+
+**Endpoint:** `/comment?id=<commentId>`
+**Method:** `PATCH`
+**Query Params:**
+
+- `id` (string) – The comment ID.
+  **Request Body:**
+
+```json
+{
+  "text": "string"
+}
+```
+
+**Description:** Updates the comment’s text.
+**Possible Responses:**
+
+- `200 OK`: Returns the updated `Comment` object.
+- `404 Not Found`: Comment not found.
+
+---
+
+### Delete Comment
+
+**Endpoint:** `/comment?id=<commentId>`
+**Method:** `DELETE`
+**Query Params:**
+
+- `id` (string) – The comment ID.
+  **Description:** Deletes the specified comment.
+  **Possible Responses:**
+- `200 OK`: `{ "message": "Comment deleted" }`
+- `404 Not Found`: Comment not found.
+
+---
+
+### Get Likes for Comment
+
+**Endpoint:** `/comment/likes`
+**Method:** `GET`
+**Request Body:**
+
+```json
+{
+  "parentId": "string" // Comment ID
+}
+```
+
+**Description:** Retrieves all like records for a given comment.
+**Possible Responses:**
+
+- `200 OK`: `[{ … }]` (list of `Like` objects)
+
+---
+
+### Add Like to Comment
+
+**Endpoint:** `/comment/like`
+**Method:** `POST`
+**Request Body:**
+
+```json
+{
+  "userId": "string",
+  "parentId": "string" // Comment ID
+}
+```
+
+**Description:** Creates a like record and increments the comment’s like count.
+**Possible Responses:**
+
+- `200 OK`: `{ "likes": number }` (new like count)
+
+---
+
+### Remove Like from Comment
+
+**Endpoint:** `/comment/like`
+**Method:** `DELETE`
+**Request Body:**
+
+```json
+{
+  "userId": "string",
+  "parentId": "string"
+}
+```
+
+**Description:** Deletes the like record and decrements the comment’s like count.
+**Possible Responses:**
+
+- `200 OK`: `{ "likes": number }` (new like count)
+
+---
+
+## Reply
+
+_Endpoints mirror `/comment` but operate on replies._
+
+- **Create Reply:**
+
+  - `POST /reply`
+  - Body: `{ parentId, author, text }`
+  - Returns created `Reply`.
+
+- **Get Reply by ID:**
+
+  - `GET /reply?id=<replyId>`
+
+- **List Replies:**
+
+  - `GET /reply/all?parentId=<commentId>`
+
+- **Update Reply:**
+
+  - `PATCH /reply?id=<replyId>`
+  - Body: `{ text }`
+
+- **Delete Reply:**
+
+  - `DELETE /reply?id=<replyId>`
+
+- **Get Likes on Reply:**
+
+  - `GET /reply/likes`
+  - Body: `{ parentId }`
+
+- **Add Like to Reply:**
+
+  - `POST /reply/like`
+  - Body: `{ userId, parentId }`
+
+- **Remove Like from Reply:**
+  - `DELETE /reply/like`
+  - Body: `{ userId, parentId }`
