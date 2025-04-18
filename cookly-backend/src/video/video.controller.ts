@@ -42,4 +42,9 @@ export class VideoController {
   viewVideo(@Param('id') id: string): Promise<any> {
     return this.videoService.viewVideo(id);
   }
+
+  @Get('feed')
+  getMainFeed(): Promise<any> {
+    return this.videoService.getMainFeed();
+  }
 }

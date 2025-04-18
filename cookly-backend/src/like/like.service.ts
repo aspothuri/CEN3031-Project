@@ -12,7 +12,7 @@ export class LikeService {
   constructor(@InjectModel(Like.name) private likeModel: Model<Like>) {}
 
   async createLike(createLikeDto: CreateLikeDto) {
-    return this.likeModel.findOneAndUpdate(
+    return await this.likeModel.findOneAndUpdate(
       createLikeDto,
       {
         $setOnInsert: createLikeDto,
@@ -25,14 +25,14 @@ export class LikeService {
   }
 
   async deleteLike(deleteLikeDto: DeleteLikeDto) {
-    return this.likeModel.deleteOne(deleteLikeDto);
+    return await this.likeModel.deleteOne(deleteLikeDto);
   }
 
   async clearLikes(clearLikeDto: ClearLikeDto) {
-    return this.likeModel.deleteMany(clearLikeDto);
+    return await this.likeModel.deleteMany(clearLikeDto);
   }
 
   async getLikes(getLikesDto: GetLikesDto) {
-    return this.likeModel.find(getLikesDto);
+    return await this.likeModel.countDocuments(getLikesDto);
   }
 }

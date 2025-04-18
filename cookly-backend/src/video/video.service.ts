@@ -5,12 +5,18 @@ import { Model } from 'mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { User } from 'src/user/user.schema';
 import { SearchVideoEntity } from './entities/searchVideo.entity';
+import { Reply } from 'src/reply/reply.schema';
+import { Like } from 'src/like/like.schema';
+import { Comment } from 'src/comment/comment.schema';
 
 @Injectable()
 export class VideoService {
   constructor(
     @InjectModel(Video.name) private videoModel: Model<Video>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Comment.name) private commentModel: Model<Comment>,
+    @InjectModel(Reply.name) private replyModel: Model<Reply>,
+    @InjectModel(Like.name) private likeModel: Model<Like>,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -77,5 +83,30 @@ export class VideoService {
     }
 
     return { views: result.views };
+  }
+
+  async getMainFeed() {
+    return await this.videoModel.aggregate([
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'video',
+          as: 'comments',
+        },
+      },
+      {
+        $addFields: {
+          commentCount: { $size: '$comments' },
+        },
+      },
+      {
+        $addFields: {
+          score: { $add: ['$likes', '$commentCount', '$views'] },
+        },
+      },
+      { $sort: { score: -1 } },
+      { $project: { likes: 0, comments: 0, views: 0 } },
+    ]);
   }
 }
