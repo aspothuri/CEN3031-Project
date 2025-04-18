@@ -1,5 +1,7 @@
+import { CreateLikeDto } from './../like/dtos/create-like.dto';
 import { Logger } from '@nestjs/common';
 import { FilterQuery, Model, Types } from 'mongoose';
+import { ClearLikeDto } from 'src/like/dtos/clear-like.dto';
 import { LikeService } from 'src/like/like.service';
 
 export abstract class BaseEngagementService<T> {
@@ -35,6 +37,19 @@ export abstract class BaseEngagementService<T> {
   }
 
   async remove(id: string) {
+    this.likeService.clearLikes({ parent_id: id }).then();
     return await this.model.findByIdAndDelete(id);
+  }
+
+  async getLikes(getLikesDto: any) {
+    return await this.likeService.getLikes(getLikesDto);
+  }
+
+  async addLike(createLikeDto: any) {
+    return await this.likeService.createLike(createLikeDto);
+  }
+
+  async removeLike(deleteLikeDto: any) {
+    return await this.likeService.deleteLike(deleteLikeDto);
   }
 }

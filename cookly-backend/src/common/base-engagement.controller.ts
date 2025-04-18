@@ -8,16 +8,23 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { CreateLikeDto } from 'src/like/dtos/create-like.dto';
 
 export abstract class BaseEngagementController<
   TCreateDto,
   TUpdateDto,
+  TCreateLikeDto,
+  TDeleteLikeDto,
+  TGetLikesDto,
   TService extends {
     create(dto: TCreateDto): Promise<any>;
     findOne(id: string): Promise<any>;
     findAll(parentId: string): Promise<any>;
     update(id: string, dto: TUpdateDto): Promise<any>;
     remove(id: string): Promise<any>;
+    getLikes(dto: TGetLikesDto): Promise<any>;
+    addLike(dto: TCreateLikeDto): Promise<any>;
+    removeLike(dto: TDeleteLikeDto): Promise<any>;
   },
 > {
   constructor(protected readonly service: TService) {}
@@ -39,13 +46,28 @@ export abstract class BaseEngagementController<
     return this.service.findAll(parentId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCommentDto: TUpdateDto) {
+  @Patch()
+  update(@Query('id') id: string, @Body() updateCommentDto: TUpdateDto) {
     return this.service.update(id, updateCommentDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete()
+  remove(@Query('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Get('likes')
+  getLikes(@Body() getLikesDto: TGetLikesDto) {
+    return this.service.getLikes(getLikesDto);
+  }
+
+  @Post('like')
+  addLike(@Body() createLikeDto: TCreateLikeDto) {
+    return this.service.addLike(createLikeDto);
+  }
+
+  @Delete('like')
+  removeLike(@Body() deleteLikeDto: TDeleteLikeDto) {
+    return this.service.removeLike(deleteLikeDto);
   }
 }

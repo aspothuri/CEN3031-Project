@@ -5,13 +5,23 @@ import { Like } from './like.schema';
 import { CreateLikeDto } from './dtos/create-like.dto';
 import { DeleteLikeDto } from './dtos/delete-like.dto';
 import { ClearLikeDto } from './dtos/clear-like.dto';
+import { GetLikesDto } from './dtos/get-likes.dto';
 
 @Injectable()
 export class LikeService {
   constructor(@InjectModel(Like.name) private likeModel: Model<Like>) {}
 
   async createLike(createLikeDto: CreateLikeDto) {
-    return this.likeModel.create(createLikeDto);
+    return this.likeModel.findOneAndUpdate(
+      createLikeDto,
+      {
+        $setOnInsert: createLikeDto,
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
   }
 
   async deleteLike(deleteLikeDto: DeleteLikeDto) {
@@ -20,5 +30,9 @@ export class LikeService {
 
   async clearLikes(clearLikeDto: ClearLikeDto) {
     return this.likeModel.deleteMany(clearLikeDto);
+  }
+
+  async getLikes(getLikesDto: GetLikesDto) {
+    return this.likeModel.find(getLikesDto);
   }
 }
