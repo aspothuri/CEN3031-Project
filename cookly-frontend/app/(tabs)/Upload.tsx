@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 
@@ -18,24 +18,38 @@ import { Feather } from "@expo/vector-icons";
  */
 export default function Upload() {
   const router = useRouter();
-  const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [file, setFile] = useState<{
+    uri: string;
+    name: string;
+    mimeType: string;
+  } | null>(null);
+  
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   const pickVideo = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "video/*",
-        copyToCacheDirectory: true,
-        multiple: false,
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert("Permission denied", "You need to allow access to your media library.");
+      return;
+    }
+  
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: false,
+      quality: 1,
+    });
+  
+    if (!result.canceled && result.assets.length > 0) {
+      const asset = result.assets[0];
+      setFile({
+        uri: asset.uri,
+        name: asset.fileName ?? "video.mp4",
+        mimeType: asset.type ?? "video/mp4",
       });
-      if (!result.canceled && result.assets.length > 0) {
-        setFile(result.assets[0]);
-      }
-    } catch (e) {
-      Alert.alert("Error picking video", e instanceof Error ? e.message : "Unknown error");
     }
   };
+  
 
   const handleUpload = async () => {
     if (!file) {
