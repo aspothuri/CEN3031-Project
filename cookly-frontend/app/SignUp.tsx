@@ -44,7 +44,7 @@ export default function SignUp() {
       }
 
       console.log("✅ Signup successful!", data);
-      login();
+      login(data.username);
       router.push(`/(tabs)/Profile?username=${data.username}`);
     } catch (error) {
       const message =

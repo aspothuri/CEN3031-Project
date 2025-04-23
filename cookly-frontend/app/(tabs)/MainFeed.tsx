@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,34 +8,39 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
-  Modal,
-  ScrollView,
+  SafeAreaView,
+  Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { Video, ResizeMode } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
+import { ViewToken } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-type Comment = {
-  author: string;
-  text: string;
-  parentId: string;
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
+const TAB_BAR_HEIGHT = 70;
+const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 34 : 0;
+const CONTENT_BOTTOM_PADDING = TAB_BAR_HEIGHT + BOTTOM_SAFE_AREA;
+
+type VideoItem = {
+  _id: string;
+  link: string;
+  description: string;
+  likes: number;
+  views: number;
 };
 
 export default function MainFeed() {
-  const router = useRouter();
   const listRef = useRef<FlatList>(null);
+const { username } = useAuth(); // or whatever contains the username
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [feedVideos, setFeedVideos] = useState([]);
+  const [searchResults, setSearchResults] = useState<VideoItem[]>([]);
+  const [feedVideos, setFeedVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState("");
+  const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
 
   const fetchFeed = async () => {
     try {
@@ -55,7 +60,9 @@ export default function MainFeed() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/video/search/${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/video/search/${encodeURIComponent(searchQuery)}`
+      );
       if (!response.ok) throw new Error("Failed to fetch videos");
       const data = await response.json();
       setSearchResults(data);
@@ -72,137 +79,161 @@ export default function MainFeed() {
     listRef.current?.scrollToOffset({ animated: true, offset: 0 });
   };
 
-  const toggleComments = async (videoId: string) => {
-    if (showComments) return setShowComments(false);
+  const handleLike = async (videoId: string) => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/comment/all?parentId=${videoId}`);
-      if (!response.ok) throw new Error("Failed to fetch comments");
-      const data = await response.json();
-      setComments(data);
-      setShowComments(true);
+      const isLiked = likedVideos.has(videoId);
+      const endpoint = isLiked ? "unlike" : "like";
+      
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/user/${username}/${videoId}/${endpoint}`
+,
+        { method: "PATCH" }
+      );
+
+      if (response.ok) {
+        setFeedVideos(prev => prev.map(video => 
+          video._id === videoId ? { 
+            ...video, 
+            likes: (video.likes ?? 0) + (isLiked ? -1 : 1)
+          } : video
+        ));
+
+        setLikedVideos(prev => {
+          const newSet = new Set(prev);
+          isLiked ? newSet.delete(videoId) : newSet.add(videoId);
+          return newSet;
+        });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      console.error("Like error:", err);
     }
   };
 
-  const postComment = async (videoId: string) => {
-    if (!newComment.trim()) return;
+  const incrementView = async (videoId: string) => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          parentId: videoId,
-          author: "demoUser",
-          text: newComment,
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to post comment");
-      setNewComment("");
-      toggleComments(videoId);
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/video/${videoId}/view`,
+        { method: "PATCH" }
+      );
+
+      if (response.ok) {
+        setFeedVideos(prev => prev.map(video => 
+          video._id === videoId ? { ...video, views: video.views + 1 } : video
+        ));
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      console.error("View increment error:", err);
     }
   };
 
-  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 80 });
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: any[] }) => {
-    if (viewableItems.length > 0) setCurrentIndex(viewableItems[0].index);
-  }).current;
-
-  React.useEffect(() => {
+  useEffect(() => {
     fetchFeed();
   }, []);
 
   const dataToRender = searchResults.length > 0 ? searchResults : feedVideos;
+  
+  const viewConfigRef = useRef({
+    itemVisiblePercentThreshold: 50,
+    waitForInteraction: true,
+    minimumViewTime: 300,
+  });
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+      const index = viewableItems[0].index;
+      setCurrentIndex(index);
+      
+      const videoId = dataToRender[index]?._id;
+      if (videoId) {
+        incrementView(videoId);
+      }
+    }
+  });
+
+  const renderVideoItem = ({ item, index }: { item: VideoItem; index: number }) => (
+    <View style={styles.videoContainer}>
+      <Video
+        source={{ uri: item.link }}
+        style={styles.video}
+        useNativeControls
+        resizeMode={ResizeMode.COVER}
+        shouldPlay={currentIndex === index}
+        isLooping
+      />
+      
+      <View style={styles.overlay}>
+        <Text style={styles.descriptionOverlay}>{item.description}</Text>
+        
+        <View style={styles.statsContainer}>
+          <TouchableOpacity 
+            style={styles.statItem}
+            onPress={() => handleLike(item._id)}
+          >
+            <Ionicons 
+              name={likedVideos.has(item._id) ? "heart" : "heart-outline"} 
+              size={28} 
+              color={likedVideos.has(item._id) ? "red" : "white"} 
+            />
+            <Text style={styles.statText}>{item.likes}</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.statItem}>
+            <Ionicons name="eye" size={28} color="white" />
+            <Text style={styles.statText}>{item.views}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      {searchResults.length > 0 && (
-        <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        {searchResults.length > 0 && (
           <TouchableOpacity onPress={handleReset} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={28} color="#02b33a" />
+            <Ionicons name="arrow-back" size={24} color="#02b33a" />
+          </TouchableOpacity>
+        )}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search recipes..."
+            placeholderTextColor="#aaa"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+          />
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+            <Text style={styles.searchButtonText}>Search</Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search recipes..."
-          placeholderTextColor="#aaa"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>Search</Text>
-        </TouchableOpacity>
       </View>
 
-      {loading && <ActivityIndicator size="large" color="#5be37f" style={{ marginTop: 10 }} />} 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      <FlatList
-        ref={listRef}
-        data={dataToRender}
-        pagingEnabled
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewConfigRef.current}
-        keyExtractor={(item, index) => item.link || index.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.feedItem}>
-            <Video
-              source={{ uri: item.link }}
-              rate={1.0}
-              volume={1.0}
-              isMuted={false}
-              resizeMode={ResizeMode.CONTAIN}
-              shouldPlay={currentIndex === index}
-              isLooping
-              style={styles.video}
-              useNativeControls={false}
-            />
-            <Text style={styles.feedText}>{item.description}</Text>
-            <Text style={styles.metaText}>👍 {item.likes || 0}   👁️ {item.views || 0}</Text>
-            <TouchableOpacity onPress={() => toggleComments(item._id)}>
-              <Text style={styles.commentToggle}>💬 Comments</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <Modal visible={showComments} animationType="slide">
-        <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 50 }}>
-          <TouchableOpacity onPress={() => setShowComments(false)} style={{ padding: 10 }}>
-            <Text style={{ fontSize: 18, color: "#02b33a" }}>⬇️ Close Comments</Text>
-          </TouchableOpacity>
-          <ScrollView style={{ padding: 10 }}>
-            {comments.map((c, i) => (
-              <View key={i} style={{ marginBottom: 12 }}>
-                <Text style={{ fontWeight: "bold" }}>{c.author}</Text>
-                <Text>{c.text}</Text>
-              </View>
-            ))}
-          </ScrollView>
-          <View style={{ flexDirection: "row", padding: 10 }}>
-            <TextInput
-              style={{ flex: 1, borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8 }}
-              value={newComment}
-              onChangeText={setNewComment}
-              placeholder="Add a comment..."
-            />
-            <TouchableOpacity
-              onPress={() => postComment(comments[0]?.parentId)}
-              style={{ marginLeft: 10, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: "#02b33a", borderRadius: 8 }}
-            >
-              <Text style={{ color: "#fff" }}>Post</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#5be37f" style={styles.loader} />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={dataToRender}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderVideoItem}
+          pagingEnabled 
+          decelerationRate="fast"
+          snapToInterval={SCREEN_HEIGHT}
+          snapToAlignment="start"
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewConfigRef.current}
+          showsVerticalScrollIndicator={false}
+          getItemLayout={(_, index) => ({
+            length: SCREEN_HEIGHT,
+            offset: SCREEN_HEIGHT * index,
+            index,
+          })}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -212,26 +243,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   header: {
-    paddingTop: 50,
-    paddingHorizontal: 10,
-    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
+    padding: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    zIndex: 10,
   },
   backButton: {
-    padding: 6,
-    borderRadius: 10,
+    marginRight: 8,
   },
   searchContainer: {
+    flex: 1,
     flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-    paddingTop: 20,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f0f0f0",
     padding: 10,
     borderRadius: 8,
     fontSize: 16,
@@ -242,43 +271,71 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
+    justifyContent: "center",
   },
   searchButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
   },
-  feedItem: {
-    height: SCREEN_HEIGHT,
+  loader: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#000",
-  },
-  video: {
-    width: "100%",
-    height: SCREEN_HEIGHT * 0.8,
-  },
-  feedText: {
-    fontSize: 18,
-    color: "#fff",
-    marginTop: 10,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  metaText: {
-    fontSize: 14,
-    color: "#ccc",
-    marginTop: 4,
   },
   errorText: {
     color: "red",
     textAlign: "center",
-    marginVertical: 10,
+    marginTop: 20,
     fontSize: 16,
   },
-  commentToggle: {
-    color: "#02b33a",
+  videoContainer: {
+    height: SCREEN_HEIGHT,
+    width: SCREEN_WIDTH,
+    backgroundColor: "#000",
+  },
+  video: {
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    bottom: SCREEN_HEIGHT*0.23, // Adjusted higher position
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 12,
+    margin: 12,
+  },
+  descriptionOverlay: {
+    color: "white",
+    fontSize: 18,
+    marginBottom: 16,
+    fontWeight: "500",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    gap: 20,
     marginTop: 8,
-    fontSize: 16,
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 20,
+  },
+  statText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });

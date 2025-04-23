@@ -46,7 +46,7 @@ export default function LogIn() {
       }
 
       console.log("✅ Login successful:", data);
-      login();
+      login(data.username);
       router.push(`/(tabs)/Profile?username=${data.username}`);
     } catch (error) {
       const errorMessage =
